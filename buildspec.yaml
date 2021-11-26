@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+
+  pre_build:
+    commands:
+      - mkdir -p python-packages/python
+      - pip install -r requirements/base.txt -t python-packages/python
+  build:
+    commands:
+      - aws cloudformation package --template infrastructure.yaml --s3-bucket mahbub-development --s3-prefix builds --output-template template.yaml
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
+
+artifacts:
+  type: zip
+  files:
+    - template.yaml

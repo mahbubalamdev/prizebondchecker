@@ -1,0 +1,123 @@
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: python3.7
+
+Parameters:
+  Stage:
+    Type: String
+    Description: The stage to deploy into.
+    Default: dev
+
+Resources:
+  LambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: python-packages/
+      Description: Python requirements for lambda functions
+
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Cors:
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+        AllowMethods: "'*'"
+        AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          CongintoAuth:
+            AuthorizationScopes:
+              - email
+              - profile
+              - openid
+            UserPoolArn: arn:aws:cognito-idp:us-east-1:664020862805:userpool/us-east-1_tzvKYf0mC
+            AuthType: COGNITO_USER_POOLS
+        DefaultAuthorizer: CongintoAuth
+        AddDefaultAuthorizerToCorsPreflight: false
+      Domain:
+        DomainName: api.abol-tabol.com
+        CertificateArn: arn:aws:acm:us-east-1:664020862805:certificate/43e89e71-23a6-495d-8e55-d5a898bc7dd6
+        EndpointConfiguration: REGIONAL
+        Route53:
+          HostedZoneId: Z0498650TS8WH54G6G77
+      EndpointConfiguration: REGIONAL
+      BinaryMediaTypes:
+        - multipart/form-data
+      StageName:
+        Ref: Stage
+      Cors:
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+        AllowMethods: "'*'"
+        AllowOrigin: "'*'"
+
+  ApiLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.handler
+      CodeUri: app/
+      Timeout: 60
+      MemorySize: 128
+      Layers:
+        - Ref: LambdaLayer
+      Policies:
+        - Version: '2012-10-17' 
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:Query
+              Resource:
+                Fn::GetAtt:
+                  - PrizeBondsTable
+                  - Arn
+      Environment:
+        Variables:
+          STAGE:
+            Ref: Stage
+          PRIZE_BOND_TABLE:
+            Ref: PrizeBondsTable
+      Events:
+        ApiEventRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId:
+              Ref: ApiGatewayApi
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId:
+              Ref: ApiGatewayApi
+
+  PrizeBondsTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: Username
+          AttributeType: S
+        - 
+          AttributeName: BondNumber
+          AttributeType: S
+     
+      KeySchema: 
+        - 
+          AttributeName: Username
+          KeyType: HASH
+        - 
+          AttributeName: BondNumber
+          KeyType: RANGE
+        
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+Outputs:
+  ApiUrl:
+    Description: The regional domain to access the API
+    Value:
+      Fn::Sub: 'https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com'

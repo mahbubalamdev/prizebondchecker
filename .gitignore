@@ -1,0 +1,5 @@
+venv
+__pycache__
+template.yaml
+python-packages
+.DS_Store
