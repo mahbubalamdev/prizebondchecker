@@ -66,6 +66,7 @@ Resources:
         - https://prizebondchecker.mahbubalam.dev
         - https://localhost:3000
       SupportedIdentityProviders:
+        - COGNITO
         - !Ref GoogleIdentityProvider
       UserPoolId:
         Ref: PrizebondUserPool
