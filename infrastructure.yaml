@@ -75,10 +75,10 @@ Resources:
       ProviderType: Google
       AttributeMapping:
         email: email
-        phoneNumbers: phone_number
+        phone_number: phoneNumbers
         name: name
         picture: picture
-        sub: username
+        username: sub
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
