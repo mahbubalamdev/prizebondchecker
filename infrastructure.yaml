@@ -42,6 +42,11 @@ Resources:
       UserPoolName:
         Fn::Sub: PrizebondUserPool-${Stage}
   
+  PrizebondUserPoolDomain: 
+    Type: AWS::Cognito::UserPoolDomain 
+    Properties:
+      UserPoolId: !Ref PrizebondUserPool 
+      Domain: prizebondauth
   PrizebondUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties: 
@@ -60,6 +65,7 @@ Resources:
       LogoutURLs: 
         - https://prizebondchecker.mahbubalam.dev
         - https://localhost:3000
+      SupportedIdentityProviders: Google
       UserPoolId:
         Ref: PrizebondUserPool
 
