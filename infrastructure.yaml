@@ -65,7 +65,8 @@ Resources:
       LogoutURLs: 
         - https://prizebondchecker.mahbubalam.dev
         - https://localhost:3000
-      SupportedIdentityProviders: Google
+      SupportedIdentityProviders:
+        - Google
       UserPoolId:
         Ref: PrizebondUserPool
 
