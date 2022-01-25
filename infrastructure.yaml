@@ -2,13 +2,32 @@ Transform: AWS::Serverless-2016-10-31
 
 Globals:
   Function:
-    Runtime: python3.7
+    Runtime: python3.8
 
 Parameters:
   Stage:
     Type: String
     Description: The stage to deploy into.
     Default: dev
+  
+  GoogleClientId:
+    Type: String
+    Description: Google client id
+    NoEcho: true
+  
+  GoogleClientSecret:
+    Type: String
+    Description: Google client secret
+    NoEcho: true
+
+Mappings:
+  Route53:
+    abol-tabol:
+      HostedZoneId: Z0173847221KGU6HSM1O8
+  DomainInfo:
+    prizebondapi:
+      DomainName: prizebondapi.abol-tabol.com
+      DomainCertificate: arn:aws:acm:us-east-1:664020862805:certificate/ae4896aa-fc45-4096-a6e2-26d8b74e7b94
 
 Resources:
   LambdaLayer:
@@ -16,6 +35,50 @@ Resources:
     Properties:
       ContentUri: python-packages/
       Description: Python requirements for lambda functions
+
+  PrizebondUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties: 
+      UserPoolName:
+        Fn::Sub: PrizebondUserPool-${Stage}
+  
+  PrizebondUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties: 
+      AllowedOAuthFlows: 
+        - implicit
+      AllowedOAuthScopes: 
+        - phone
+        - email
+        - openid
+        - aws.cognito.signin.user.admin
+        - profile
+      CallbackURLs: 
+        - https://prizebondchecker.mahbubalam.dev/login
+        - https://localhost:3000/login
+      ClientName: PrizebondApp
+      LogoutURLs: 
+        - https://prizebondchecker.mahbubalam.dev
+        - https://localhost:3000
+      UserPoolId:
+        Ref: PrizebondUserPool
+
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref PrizebondUserPool
+      ProviderName: Google
+      ProviderDetails:
+        client_id: !Ref GoogleClientId
+        client_secret: !Ref GoogleClientSecret
+        authorize_scopes: profile email openid
+      ProviderType: Google
+      AttributeMapping:
+        email: email
+        phoneNumbers: phone_number
+        name: name
+        picture: picture
+        sub: username
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -31,16 +94,17 @@ Resources:
               - email
               - profile
               - openid
-            UserPoolArn: arn:aws:cognito-idp:us-east-1:664020862805:userpool/us-east-1_tzvKYf0mC
+            UserPoolArn:
+              Fn::GetAtt: [PrizebondUserPool, Arn]
             AuthType: COGNITO_USER_POOLS
         DefaultAuthorizer: CongintoAuth
         AddDefaultAuthorizerToCorsPreflight: false
       Domain:
-        DomainName: api.abol-tabol.com
-        CertificateArn: arn:aws:acm:us-east-1:664020862805:certificate/43e89e71-23a6-495d-8e55-d5a898bc7dd6
+        DomainName: !FindInMap [DomainInfo, prizebondapi, DomainName]
+        CertificateArn: !FindInMap [DomainInfo, prizebondapi, DomainCertificate]
         EndpointConfiguration: REGIONAL
         Route53:
-          HostedZoneId: Z0498650TS8WH54G6G77
+          HostedZoneId: !FindInMap [Route53, abol-tabol, HostedZoneId]
       EndpointConfiguration: REGIONAL
       BinaryMediaTypes:
         - multipart/form-data
