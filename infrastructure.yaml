@@ -36,58 +36,58 @@ Resources:
       ContentUri: python-packages/
       Description: Python requirements for lambda functions
 
-  # PrizebondUserPool:
-  #   Type: AWS::Cognito::UserPool
-  #   Properties: 
-  #     UserPoolName:
-  #       Fn::Sub: PrizebondUserPool-${Stage}
+  PrizebondUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties: 
+      UserPoolName:
+        Fn::Sub: PrizebondUserPool-${Stage}
   
-  # PrizebondUserPoolDomain: 
-  #   Type: AWS::Cognito::UserPoolDomain 
-  #   Properties:
-  #     UserPoolId: !Ref PrizebondUserPool 
-  #     Domain: prizebondauth
+  PrizebondUserPoolDomain: 
+    Type: AWS::Cognito::UserPoolDomain 
+    Properties:
+      UserPoolId: !Ref PrizebondUserPool 
+      Domain: prizebondauth
 
-  # PrizebondUserPoolClient:
-  #   Type: AWS::Cognito::UserPoolClient
-  #   Properties: 
-  #     AllowedOAuthFlows: 
-  #       - implicit
-  #     AllowedOAuthScopes: 
-  #       - phone
-  #       - email
-  #       - openid
-  #       - aws.cognito.signin.user.admin
-  #       - profile
-  #     CallbackURLs: 
-  #       - https://prizebondchecker.mahbubalam.dev/login
-  #       - https://localhost:3000/login
-  #     ClientName: PrizebondApp
-  #     LogoutURLs: 
-  #       - https://prizebondchecker.mahbubalam.dev
-  #       - https://localhost:3000
-  #     SupportedIdentityProviders:
-  #       - COGNITO
-  #       - !Ref GoogleIdentityProvider
-  #     UserPoolId:
-  #       Ref: PrizebondUserPool
+  PrizebondUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties: 
+      AllowedOAuthFlows: 
+        - implicit
+      AllowedOAuthScopes: 
+        - phone
+        - email
+        - openid
+        - aws.cognito.signin.user.admin
+        - profile
+      CallbackURLs: 
+        - https://prizebondchecker.mahbubalam.dev/login
+        - https://localhost:3000/login
+      ClientName: PrizebondApp
+      LogoutURLs: 
+        - https://prizebondchecker.mahbubalam.dev
+        - https://localhost:3000
+      SupportedIdentityProviders:
+        - COGNITO
+        - !Ref GoogleIdentityProvider
+      UserPoolId:
+        Ref: PrizebondUserPool
 
-  # GoogleIdentityProvider:
-  #   Type: AWS::Cognito::UserPoolIdentityProvider
-  #   Properties:
-  #     UserPoolId: !Ref PrizebondUserPool
-  #     ProviderName: Google
-  #     ProviderDetails:
-  #       client_id: !Ref GoogleClientId
-  #       client_secret: !Ref GoogleClientSecret
-  #       authorize_scopes: profile email openid
-  #     ProviderType: Google
-  #     AttributeMapping:
-  #       email: email
-  #       phone_number: phoneNumbers
-  #       name: name
-  #       picture: picture
-  #       username: sub
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref PrizebondUserPool
+      ProviderName: Google
+      ProviderDetails:
+        client_id: !Ref GoogleClientId
+        client_secret: !Ref GoogleClientSecret
+        authorize_scopes: profile email openid
+      ProviderType: Google
+      AttributeMapping:
+        email: email
+        phone_number: phoneNumbers
+        name: name
+        picture: picture
+        username: sub
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -96,18 +96,18 @@ Resources:
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
         AllowMethods: "'*'"
         AllowOrigin: "'*'"
-      # Auth:
-      #   Authorizers:
-      #     CongintoAuth:
-      #       AuthorizationScopes:
-      #         - email
-      #         - profile
-      #         - openid
-      #       UserPoolArn:
-      #         Fn::GetAtt: [PrizebondUserPool, Arn]
-      #       AuthType: COGNITO_USER_POOLS
-      #   DefaultAuthorizer: CongintoAuth
-      #   AddDefaultAuthorizerToCorsPreflight: false
+      Auth:
+        Authorizers:
+          CongintoAuth:
+            AuthorizationScopes:
+              - email
+              - profile
+              - openid
+            UserPoolArn:
+              Fn::GetAtt: [PrizebondUserPool, Arn]
+            AuthType: COGNITO_USER_POOLS
+        DefaultAuthorizer: CongintoAuth
+        AddDefaultAuthorizerToCorsPreflight: false
       Domain:
         DomainName: !FindInMap [DomainInfo, prizebondapi, DomainName]
         CertificateArn: !FindInMap [DomainInfo, prizebondapi, DomainCertificate]
